@@ -62,29 +62,104 @@ function updateBoid(boid, dt)
   boid.ay = dyh * 0.1
 end
 
+function makeAutomaton(rows, cols, prob)
+  local auto = {
+    rows = rows,
+    cols = cols,
+    cells = {}
+  }
+
+  for r = 0, rows do
+    auto.cells[r] = {}
+    for c = 0, cols do
+      local value = 0
+      if math.random() < prob then
+        value = 1
+      end
+      auto.cells[r][c] = value
+    end
+  end
+
+  return auto
+end
+
+function makeGlider(rows, cols)
+  local auto = makeAutomaton(rows, cols, 0.0)
+
+  auto.cells[5][5] = 1
+  auto.cells[5][7] = 1
+  auto.cells[6][6] = 1
+  auto.cells[6][7] = 1
+  auto.cells[7][6] = 1
+
+  return auto
+end
+
+function updateAutomaton(auto)
+  local mr = auto.rows - 1
+  local mc = auto.cols - 1
+
+  for r = 0, auto.rows do
+    for c = 0, auto.cols do
+      local rn = (r - 1) % mr -- Row North
+      local rs = (r + 1) % mr -- Row South
+      local cw = (c - 1) % mc -- Col West
+      local ce = (c + 1) % mc -- Col East
+
+      local total =
+        auto.cells[rn][c] +  -- N
+        auto.cells[rn][ce] + -- NE
+        auto.cells[r][ce] +  -- E
+        auto.cells[rs][ce] + -- SE
+        auto.cells[rs][c] +  -- S
+        auto.cells[rs][cw] + -- SW
+        auto.cells[r][cw] +  -- W
+        auto.cells[rn][cw]   -- NW
+
+      if total < 2 then
+        auto.cells[r][c] = 0
+      end
+
+      if total == 3 then
+        auto.cells[r][c] = 1
+      end
+
+      if total > 3 then
+        auto.cells[r][c] = 0
+      end
+    end
+  end
+end
+
+function drawAutomaton(auto)
+  local width = love.graphics.getWidth()
+  local height = love.graphics.getHeight()
+
+  local cellWidth = width / auto.cols
+  local cellHeight = height / auto.rows
+
+  love.graphics.setColor(0.7, 0.7, 0.1)
+  for r = 0, auto.rows do
+    for c = 0, auto.cols do
+      local value = auto.cells[r][c]
+      if value == 1 then
+        love.graphics.rectangle('fill', c * cellWidth + 1, r * cellHeight + 1, cellWidth - 2, cellHeight - 2)
+      end
+    end
+  end
+end
+
 -- Love2D callbacks
 
 function love.load()
-  -- The collection of boids we will be simulating
-  boids = {}
-  for i = 0, 100 do
-    boids[i] = makeBoid()
-  end
-
-  -- The previous dt for use with the verlet integrator
-  dtp = 1 / 60
+  -- auto = makeAutomaton(25, 25, 0.2)
+  auto = makeGlider(25, 25)
 end
 
 function love.update(dt)
-  for i = 0, 100 do
-    updateBoid(boids[i], dt)
-  end
-
-  dtp = dt
+  updateAutomaton(auto)
 end
 
 function love.draw()
-  for i = 0, 100 do
-    drawBoid(boids[i])
-  end
+  drawAutomaton(auto)
 end
