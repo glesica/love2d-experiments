@@ -62,21 +62,26 @@ function updateBoid(boid, dt)
   boid.ay = dyh * 0.1
 end
 
-function makeAutomaton(rows, cols, prob)
+function makeAutomaton(rows, cols, prob, perTick)
   local auto = {
     rows = rows,
     cols = cols,
-    cells = {}
+    cells = {},
+    buffer = {},
+    tick = perTick,
+    perTick = perTick
   }
 
   for r = 0, rows do
     auto.cells[r] = {}
+    auto.buffer[r] = {}
     for c = 0, cols do
       local value = 0
       if math.random() < prob then
         value = 1
       end
       auto.cells[r][c] = value
+      auto.buffer[r][c] = 0
     end
   end
 
@@ -84,20 +89,20 @@ function makeAutomaton(rows, cols, prob)
 end
 
 function makeGlider(rows, cols)
-  local auto = makeAutomaton(rows, cols, 0.0)
+  local auto = makeAutomaton(rows, cols, 0.0, 0.5)
 
   auto.cells[5][5] = 1
-  auto.cells[5][7] = 1
-  auto.cells[6][6] = 1
-  auto.cells[6][7] = 1
-  auto.cells[7][6] = 1
+  auto.cells[6][5] = 1
+  auto.cells[7][5] = 1
+  auto.cells[7][4] = 1
+  auto.cells[6][3] = 1
 
   return auto
 end
 
 function updateAutomaton(auto)
-  local mr = auto.rows - 1
-  local mc = auto.cols - 1
+  local mr = auto.rows
+  local mc = auto.cols
 
   for r = 0, auto.rows do
     for c = 0, auto.cols do
@@ -115,20 +120,26 @@ function updateAutomaton(auto)
         auto.cells[rs][cw] + -- SW
         auto.cells[r][cw] +  -- W
         auto.cells[rn][cw]   -- NW
+      
+      auto.buffer[r][c] = auto.cells[r][c]
 
       if total < 2 then
-        auto.cells[r][c] = 0
+        auto.buffer[r][c] = 0
       end
 
       if total == 3 then
-        auto.cells[r][c] = 1
+        auto.buffer[r][c] = 1
       end
 
       if total > 3 then
-        auto.cells[r][c] = 0
+        auto.buffer[r][c] = 0
       end
     end
   end
+
+  local temp = auto.cells
+  auto.cells = auto.buffer
+  auto.buffer = temp
 end
 
 function drawAutomaton(auto)
@@ -152,12 +163,17 @@ end
 -- Love2D callbacks
 
 function love.load()
-  -- auto = makeAutomaton(25, 25, 0.2)
+  -- auto = makeAutomaton(25, 25, 0.2, 0.5)
   auto = makeGlider(25, 25)
+  tick = 0
 end
 
 function love.update(dt)
-  updateAutomaton(auto)
+  if tick > auto.tick then
+    auto.tick = auto.tick + auto.perTick
+    updateAutomaton(auto)
+  end
+  tick = tick + dt
 end
 
 function love.draw()
