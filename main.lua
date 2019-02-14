@@ -88,16 +88,12 @@ function makeAutomaton(rows, cols, prob, perTick)
   return auto
 end
 
-function makeGlider(rows, cols)
-  local auto = makeAutomaton(rows, cols, 0.0, 0.5)
-
-  auto.cells[5][5] = 1
-  auto.cells[6][5] = 1
-  auto.cells[7][5] = 1
-  auto.cells[7][4] = 1
-  auto.cells[6][3] = 1
-
-  return auto
+function makeGlider(auto, row, col)
+  auto.cells[row + 0][col + 2] = 1
+  auto.cells[row + 1][col + 2] = 1
+  auto.cells[row + 2][col + 2] = 1
+  auto.cells[row + 2][col + 1] = 1
+  auto.cells[row + 1][col + 0] = 1
 end
 
 function updateAutomaton(auto)
@@ -160,15 +156,41 @@ function drawAutomaton(auto)
   end
 end
 
+function toggleCell(auto, x, y)
+  local width = love.graphics.getWidth()
+  local height = love.graphics.getHeight()
+
+  local cellWidth = width / auto.cols
+  local cellHeight = height / auto.rows
+
+  local r = math.floor(y / cellHeight)
+  local c = math.floor(x / cellWidth)
+
+  auto.cells[r][c] = math.abs(auto.cells[r][c] - 1)
+end
+
 -- Love2D callbacks
 
 function love.load()
-  -- auto = makeAutomaton(25, 25, 0.2, 0.5)
-  auto = makeGlider(25, 25)
+  auto = makeAutomaton(30, 30, 0.0, 0.25)
+  makeGlider(auto, 5, 5)
+  makeGlider(auto, 5, 15)
+  makeGlider(auto, 5, 25)
+  makeGlider(auto, 15, 5)
+  makeGlider(auto, 15, 15)
+  makeGlider(auto, 15, 25)
+  makeGlider(auto, 25, 5)
+  makeGlider(auto, 25, 15)
+  makeGlider(auto, 25, 25)
+
   tick = 0
+  isPaused = true
 end
 
 function love.update(dt)
+  if isPaused then
+    return
+  end
   if tick > auto.tick then
     auto.tick = auto.tick + auto.perTick
     updateAutomaton(auto)
@@ -178,4 +200,20 @@ end
 
 function love.draw()
   drawAutomaton(auto)
+end
+
+function love.keypressed(key)
+  if key == 'return' then
+    isPaused = not isPaused
+  end
+
+  if key == 'escape' then
+    love.event.quit()
+  end
+end
+
+function love.mousepressed(x, y, button)
+  if isPaused and button == 1 then
+    toggleCell(auto, x, y)
+  end
 end
