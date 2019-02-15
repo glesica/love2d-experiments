@@ -3,20 +3,10 @@ require 'conwayRenderer'
 
 function love.load()
   auto = conway.makeAutomaton(30, 30, 0.0)
-  conway.addGlider(auto, 5, 5)
-  conway.addGlider(auto, 5, 15)
-  conway.addGlider(auto, 5, 25)
-  conway.addGlider(auto, 15, 5)
+  renderer = conwayRenderer.makeRenderer(0.1)
+
   conway.addGlider(auto, 15, 15)
-  conway.addGlider(auto, 15, 25)
-  conway.addGlider(auto, 25, 5)
-  conway.addGlider(auto, 25, 15)
-  conway.addGlider(auto, 25, 25)
-
-  conway.addBlinker(auto, 10, 10)
   conway.addBlinker(auto, 20, 20)
-
-  renderer = conwayRenderer.makeRenderer(0.25)
 
   isPaused = true
 end
